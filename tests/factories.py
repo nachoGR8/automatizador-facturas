@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 
-from facturas.domain.document import InvoiceFields
+from facturas.domain.document import Document, InvoiceFields
 
 INVOICE_LINES = [
     "Suministros Ribera S.L.",
@@ -29,3 +29,7 @@ def make_fields(**changes) -> InvoiceFields:
     }
     values.update(changes)
     return InvoiceFields(**values)
+
+
+def make_document(document_id="doc-1", errors=None, **changes) -> Document:
+    return Document(id=document_id, fields=make_fields(**changes), errors=errors or [])
