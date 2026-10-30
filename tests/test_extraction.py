@@ -1,8 +1,9 @@
 import datetime
+from decimal import Decimal
 
 import pytest
 
-from factories import INVOICE_TEXT
+from factories import INVOICE_TEXT, make_fields
 from facturas.domain.document import InvoiceFields
 from facturas.domain.extraction import extract_fields
 
@@ -55,3 +56,30 @@ def test_invoice_number_is_not_taken_from_the_title_line():
 )
 def test_date_variants(line, expected):
     assert extract_fields(line).date == expected
+
+
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("Base imponible: 100,00 €", Decimal("100.00")),
+        ("Base imponible: 12.345,67 €", Decimal("12345.67")),
+        ("Base imponible:", None),
+    ],
+)
+def test_base_in_spanish_number_format(line, expected):
+    assert extract_fields(line).base == expected
+
+
+def test_vat_percentage_is_not_confused_with_the_amount():
+    assert extract_fields("IVA (21%): 210,00 €").vat == Decimal("210.00")
+
+
+def test_total_is_the_amount_of_the_last_total_line():
+    text = "Total IVA: 21,00 €\nTotal factura: 121,00 €"
+    assert extract_fields(text).total == Decimal("121.00")
+
+
+def test_full_invoice_is_extracted_completely():
+    fields = extract_fields(INVOICE_TEXT)
+    assert fields == make_fields()
+    assert fields.confidence == 1
