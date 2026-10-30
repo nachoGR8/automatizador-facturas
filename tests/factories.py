@@ -3,6 +3,18 @@ from decimal import Decimal
 
 from facturas.domain.document import InvoiceFields
 
+INVOICE_LINES = [
+    "Suministros Ribera S.L.",
+    "CIF: B12345674",
+    "Factura nº: 2024/0042",
+    "Fecha: 15/03/2024",
+    "Cliente: Talleres Pérez NIF 12345678Z",
+    "Base imponible: 1.000,00 €",
+    "IVA (21%): 210,00 €",
+    "Total: 1.210,00 €",
+]
+INVOICE_TEXT = "\n".join(INVOICE_LINES)
+
 
 def make_fields(**changes) -> InvoiceFields:
     """Factura completa y correcta; cada test cambia solo lo que le interesa."""
