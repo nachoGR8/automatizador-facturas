@@ -13,6 +13,7 @@ from collections.abc import Callable
 from decimal import ROUND_HALF_UP, Decimal
 
 from facturas.domain.document import InvoiceFields
+from facturas.domain.extraction import SPANISH_MONTHS
 from facturas.domain.nif import is_valid_nif
 
 SUPPLIERS = [
@@ -36,20 +37,6 @@ CLIENTS = [
     "Carpintería Molina S.L.",
     "María Dolores Sanz Ortiz",
     "Gestoría Levante S.L.",
-]
-MONTHS = [
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
 ]
 VAT_RATES = [21, 10, 4]
 
@@ -113,7 +100,7 @@ def _title_first(invoice: InvoiceFields, client: str, client_nif: str, rate: int
     return [
         f"FACTURA {invoice.invoice_number}",
         f"{invoice.supplier} · CIF {invoice.nif}",
-        f"Fecha: {date.day} de {MONTHS[date.month - 1]} de {date.year}",
+        f"Fecha: {date.day} de {SPANISH_MONTHS[date.month - 1]} de {date.year}",
         f"Cliente: {client} ({client_nif})",
         f"Base imponible: {format_amount(invoice.base)} €",
         f"IVA {rate}%: {format_amount(invoice.vat)} €",
