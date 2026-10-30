@@ -19,6 +19,9 @@ _INVOICE_NUMBER = re.compile(
 # Título del documento ("FACTURA", "FACTURA 2024-0003", "ALBARÁN 15"): no es el proveedor.
 _TITLE = re.compile(r"\s*(?:factura|albar[aá]n)\b", re.IGNORECASE)
 
+# El nombre acaba en un separador ("· ", "| ") o en la etiqueta del NIF ("CIF B123...").
+_SUPPLIER_END = re.compile(r"\s*[·|]\s*|\s+(?:CIF|NIF)\b", re.IGNORECASE)
+
 _DATE = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b")
 
 # Importe español: siempre con coma y dos decimales ("1.234,56"). Así "21%" no cuenta.
@@ -28,7 +31,7 @@ _AMOUNT = re.compile(r"\d[\d.]*,\d{2}")
 def _find_supplier(text: str) -> str | None:
     for line in text.splitlines():
         if line.strip() and not _TITLE.match(line):
-            return line.strip()
+            return _SUPPLIER_END.split(line)[0].strip()
     return None
 
 

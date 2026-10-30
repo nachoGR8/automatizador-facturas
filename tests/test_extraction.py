@@ -104,3 +104,15 @@ def test_a_name_that_only_starts_like_the_title_is_still_a_supplier():
 
 def test_supplier_is_missing_when_there_are_only_titles():
     assert extract_fields("FACTURA").supplier is None
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Pinturas Benifaió S.L. · CIF B19487578",
+        "Pinturas Benifaió S.L. | NIF B19487578",
+        "Pinturas Benifaió S.L. CIF B19487578",
+    ],
+)
+def test_supplier_does_not_include_the_tax_id_on_the_same_line(line):
+    assert extract_fields(line).supplier == "Pinturas Benifaió S.L."
