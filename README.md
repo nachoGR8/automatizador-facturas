@@ -36,12 +36,25 @@ python -m venv .venv
 Abre http://127.0.0.1:8000/docs, sube `samples/factura_ejemplo.pdf` en `POST /documents` y mira el JSON.
 Por defecto usa SQLite (`facturas.db`); cambia la base de datos con la variable `DATABASE_URL`.
 
+## Con Docker
+
+```bash
+docker compose up --build
+```
+
+La API queda en http://127.0.0.1:8000/docs. La base de datos SQLite se guarda en el volumen
+`facturas-data`, así que los datos sobreviven a reinicios (`docker compose down -v` los borra).
+
 ## Tests
 
 ```bash
 .venv/Scripts/python -m pytest
 .venv/Scripts/python -m ruff check .
+.venv/Scripts/python -m ruff format --check .
 ```
+
+El pipeline de GitHub Actions (`.github/workflows/ci.yml`) ejecuta lo mismo en cada push a `main`
+y en cada pull request, y además comprueba que la imagen de Docker se construye.
 
 ## Limitaciones de la v1
 
