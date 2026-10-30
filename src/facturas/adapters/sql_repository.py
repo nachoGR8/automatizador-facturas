@@ -40,7 +40,9 @@ class DocumentRow(OrmBase):
 
 
 def _to_row(document: Document) -> DocumentRow:
-    return DocumentRow(id=document.id, errors=document.errors, **dataclasses.asdict(document.fields))
+    return DocumentRow(
+        id=document.id, errors=document.errors, **dataclasses.asdict(document.fields)
+    )
 
 
 def _to_document(row: DocumentRow) -> Document:
