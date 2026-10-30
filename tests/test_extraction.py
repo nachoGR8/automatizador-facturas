@@ -83,3 +83,24 @@ def test_full_invoice_is_extracted_completely():
     fields = extract_fields(INVOICE_TEXT)
     assert fields == make_fields()
     assert fields.confidence == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "FACTURA\nSuministros Ribera S.L.",
+        "FACTURA 2024-0003\nSuministros Ribera S.L.",
+        "Factura nº: 2024/0042\nSuministros Ribera S.L.",
+        "ALBARÁN 15\nSuministros Ribera S.L.",
+    ],
+)
+def test_supplier_skips_the_document_title(text):
+    assert extract_fields(text).supplier == "Suministros Ribera S.L."
+
+
+def test_a_name_that_only_starts_like_the_title_is_still_a_supplier():
+    assert extract_fields("Facturas Express S.L.").supplier == "Facturas Express S.L."
+
+
+def test_supplier_is_missing_when_there_are_only_titles():
+    assert extract_fields("FACTURA").supplier is None
