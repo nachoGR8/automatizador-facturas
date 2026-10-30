@@ -56,6 +56,36 @@ La API queda en http://127.0.0.1:8000/docs. La base de datos SQLite se guarda en
 El pipeline de GitHub Actions (`.github/workflows/ci.yml`) ejecuta lo mismo en cada push a `main`
 y en cada pull request, y además comprueba que la imagen de Docker se construye.
 
+## Métricas (facturas sintéticas)
+
+```bash
+.venv/Scripts/python -m benchmark.run --count 100
+```
+
+Genera facturas PDF sintéticas con 3 plantillas de maquetación distinta, las procesa con los
+adaptadores reales (pdfplumber, extracción, validación y SQLite) y compara cada campo con el valor
+con el que se generó la factura. El tiempo no incluye crear los PDF.
+
+| Lote de 100 facturas (semilla 42) | Resultado |
+|---|---|
+| Tiempo | 0,7 s (unos 7 ms por factura, en el equipo de desarrollo con Windows y Python 3.14) |
+| Precisión por campo | 90,6 % |
+| Facturas con los 7 campos correctos | 67 % |
+
+| Plantilla | Campos correctos |
+|---|---|
+| `clasica` ("Factura nº", "Base imponible", "Total") | 7 de 7 |
+| `tabla` (dirección, "FACTURA" como título aparte, EUR) | 7 de 7 |
+| `titulo` ("FACTURA 2024-0003" en la primera línea, fecha con el mes en letra) | 5 de 7 |
+
+Cómo leer estas cifras:
+
+- Las facturas son sintéticas y las he escrito yo. No miden la precisión sobre facturas reales,
+  que será menor: las etiquetas que usan ("Base imponible", "IVA", "Total") son las que el extractor
+  ya conoce. Para una cifra fiable hace falta probar con facturas reales anonimizadas.
+- Los dos fallos que sí se ven son reales: el proveedor se toma de la primera línea (falla si es
+  el título de la factura) y no se entienden fechas con el mes escrito ("26 de marzo de 2024").
+
 ## Limitaciones de la v1
 
 - Facturas en PDF con texto (no escaneadas) y etiquetas en español: "Base imponible", "IVA", "Total".
