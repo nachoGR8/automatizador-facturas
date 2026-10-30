@@ -116,3 +116,43 @@ def test_supplier_is_missing_when_there_are_only_titles():
 )
 def test_supplier_does_not_include_the_tax_id_on_the_same_line(line):
     assert extract_fields(line).supplier == "Pinturas Benifaió S.L."
+
+
+@pytest.mark.parametrize(
+    "month, number",
+    [
+        ("enero", 1),
+        ("febrero", 2),
+        ("marzo", 3),
+        ("abril", 4),
+        ("mayo", 5),
+        ("junio", 6),
+        ("julio", 7),
+        ("agosto", 8),
+        ("septiembre", 9),
+        ("octubre", 10),
+        ("noviembre", 11),
+        ("diciembre", 12),
+    ],
+)
+def test_date_with_the_month_in_letters(month, number):
+    assert extract_fields(f"Fecha: 5 de {month} de 2024").date == datetime.date(2024, number, 5)
+
+
+def test_month_in_letters_ignores_upper_case():
+    assert extract_fields("Fecha: 26 de MARZO de 2024").date == datetime.date(2024, 3, 26)
+
+
+def test_unknown_month_gives_no_date():
+    assert extract_fields("Fecha: 5 de foo de 2024").date is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Fecha: 26 de marzo de 2024\nVencimiento: 15/04/2024",
+        "Fecha: 26/03/2024\nVencimiento: 15 de abril de 2024",
+    ],
+)
+def test_the_first_date_wins_whatever_its_format(text):
+    assert extract_fields(text).date == datetime.date(2024, 3, 26)

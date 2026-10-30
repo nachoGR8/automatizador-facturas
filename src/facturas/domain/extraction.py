@@ -22,7 +22,26 @@ _TITLE = re.compile(r"\s*(?:factura|albar[aá]n)\b", re.IGNORECASE)
 # El nombre acaba en un separador ("· ", "| ") o en la etiqueta del NIF ("CIF B123...").
 _SUPPLIER_END = re.compile(r"\s*[·|]\s*|\s+(?:CIF|NIF)\b", re.IGNORECASE)
 
-_DATE = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b")
+SPANISH_MONTHS = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+]
+
+# "15/03/2024", "15-03-2024" o "15 de marzo de 2024". Gana la que aparezca primero en el texto.
+_DATE = re.compile(
+    r"\b(?:(\d{1,2})[/-](\d{1,2})[/-](\d{4})|(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4}))\b",
+    re.IGNORECASE,
+)
 
 # Importe español: siempre con coma y dos decimales ("1.234,56"). Así "21%" no cuenta.
 _AMOUNT = re.compile(r"\d[\d.]*,\d{2}")
@@ -49,10 +68,13 @@ def _find_date(text: str) -> datetime.date | None:
     match = _DATE.search(text)
     if match is None:
         return None
-    day, month, year = (int(group) for group in match.groups())
+    day, month, year, letters_day, month_name, letters_year = match.groups()
     try:
-        return datetime.date(year, month, day)
-    except ValueError:  # por ejemplo 31/02/2024
+        if day is not None:
+            return datetime.date(int(year), int(month), int(day))
+        month_number = SPANISH_MONTHS.index(month_name.lower()) + 1
+        return datetime.date(int(letters_year), month_number, int(letters_day))
+    except ValueError:  # fecha imposible (31/02/2024) o mes desconocido
         return None
 
 
