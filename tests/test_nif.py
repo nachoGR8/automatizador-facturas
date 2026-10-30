@@ -11,3 +11,13 @@ def test_valid_dni_and_nie(nif):
 @pytest.mark.parametrize("nif", ["12345678A", "X1234567A", "", "hola", "1234"])
 def test_invalid_dni_and_nie(nif):
     assert not is_valid_nif(nif)
+
+
+@pytest.mark.parametrize("cif", ["A58818501", "B12345674", "B1234567D", "b-12345674"])
+def test_valid_cif(cif):
+    assert is_valid_nif(cif)
+
+
+@pytest.mark.parametrize("cif", ["A58818502", "B1234567A", "B12345679"])
+def test_invalid_cif(cif):
+    assert not is_valid_nif(cif)
