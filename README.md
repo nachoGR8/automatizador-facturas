@@ -68,23 +68,27 @@ con el que se generó la factura. El tiempo no incluye crear los PDF.
 
 | Lote de 100 facturas (semilla 42) | Resultado |
 |---|---|
-| Tiempo | 0,7 s (unos 7 ms por factura, en el equipo de desarrollo con Windows y Python 3.14) |
-| Precisión por campo | 90,6 % |
-| Facturas con los 7 campos correctos | 67 % |
+| Tiempo | 0,7-0,8 s (unos 7-8 ms por factura, en el equipo de desarrollo con Windows y Python 3.14) |
+| Precisión por campo | 100 % |
+| Facturas con los 7 campos correctos | 100 % |
 
 | Plantilla | Campos correctos |
 |---|---|
 | `clasica` ("Factura nº", "Base imponible", "Total") | 7 de 7 |
 | `tabla` (dirección, "FACTURA" como título aparte, EUR) | 7 de 7 |
-| `titulo` ("FACTURA 2024-0003" en la primera línea, fecha con el mes en letra) | 5 de 7 |
+| `titulo` ("FACTURA 2024-0003" en la primera línea, fecha con el mes en letra) | 7 de 7 |
 
 Cómo leer estas cifras:
 
-- Las facturas son sintéticas y las he escrito yo. No miden la precisión sobre facturas reales,
-  que será menor: las etiquetas que usan ("Base imponible", "IVA", "Total") son las que el extractor
-  ya conoce. Para una cifra fiable hace falta probar con facturas reales anonimizadas.
-- Los dos fallos que sí se ven son reales: el proveedor se toma de la primera línea (falla si es
-  el título de la factura) y no se entienden fechas con el mes escrito ("26 de marzo de 2024").
+- **El 100 % no es la precisión real.** Las facturas son sintéticas y las he escrito yo. La primera
+  medición dio un 90,6 % y enseñó dos fallos (el proveedor cuando el título va arriba y las fechas
+  con el mes en letra); los arreglé después con ese mismo conjunto. Mide que el extractor lee estas
+  3 plantillas, no que generalice. Con facturas reales la cifra será menor.
+- Casos que todavía fallan (comprobados a mano): "Subtotal" en vez de "Base imponible", "Importe
+  total" en vez de "Total", fechas con puntos (15.03.2024) o con el año de 2 cifras, importes sin
+  decimales, números de factura con espacios, un bloque del cliente antes del CIF del proveedor y
+  una línea como "ORIGINAL" encima del nombre.
+- Para una cifra fiable hace falta probar con facturas reales anonimizadas.
 
 ## Limitaciones de la v1
 
