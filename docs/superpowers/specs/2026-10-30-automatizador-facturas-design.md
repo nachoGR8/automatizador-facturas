@@ -30,13 +30,15 @@ panel de revisión, lote de 30-50 facturas con métrica de precisión, Alembic, 
 | `nif` | str | Primer NIF/CIF/NIE con formato válido del texto (se asume que es el del proveedor) |
 | `invoice_number` | str | Valor que sigue a "Factura" / "Nº factura" / "Factura nº" |
 | `date` | date | Primera fecha `dd/mm/yyyy` o `dd-mm-yyyy` |
-| `base` | Decimal | Importe en la línea "Base imponible" |
-| `vat` | Decimal | Último importe de la línea que empieza por "IVA" |
-| `total` | Decimal | Importe en la línea "Total" |
+| `base` | Decimal | Último importe de la última línea que empieza por "Base imponible" |
+| `vat` | Decimal | Último importe de la última línea que empieza por "IVA" |
+| `total` | Decimal | Último importe de la última línea que empieza por "Total" |
 
-Importes en formato español (`1.234,56`) convertidos a `Decimal`.
+Importes en formato español (`1.234,56`, siempre con coma y dos decimales, así que el "21%" de
+"IVA (21%)" no cuenta como importe) convertidos a `Decimal`.
 
-**Confianza** = campos encontrados / 7 (valor entre 0 y 1).
+**Confianza** = campos encontrados / 7, redondeado a 2 decimales (valor entre 0 y 1). Es una
+propiedad de `InvoiceFields` (`fields.confidence`).
 
 ## Validaciones
 
@@ -52,10 +54,10 @@ Importes en formato español (`1.234,56`) convertidos a `Decimal`.
 ```
 src/facturas/
   domain/           lógica pura, sin FastAPI / SQLAlchemy / pdfplumber
-    document.py       Document (dataclass) + campos extraídos
+    document.py       InvoiceFields (campos + confidence) y Document (id + fields + errors)
     nif.py            is_valid_nif
     validation.py     validate
-    extraction.py     extract_fields(text) -> campos + confianza
+    extraction.py     extract_fields(text) -> InvoiceFields
   application/
     ports.py          Protocols de un método: PdfReader, DocumentRepository, Exporter
     upload_document.py
@@ -78,13 +80,13 @@ Regla de dependencias: `domain` no importa nada del proyecto; `application` solo
 - `PdfReader.read_text(pdf: bytes) -> str`
 - `DocumentRepository`: `add(document)`, `get(id) -> Document | None`, `list_all() -> list[Document]`,
   `find_by_invoice(nif, invoice_number) -> Document | None`
-- `Exporter.export(documents) -> bytes`
+- `Exporter`: atributos `media_type` y `extension`, y `export(documents) -> bytes`
 
 ### Casos de uso
 
 `UploadDocument.execute(pdf: bytes) -> Document`:
-1. `text = reader.read_text(pdf)`; si falla lanza `UnreadableDocument`.
-2. `fields, confidence = extract_fields(text)`.
+1. `text = reader.read_text(pdf)`; si falla, el adaptador lanza `UnreadableDocument`.
+2. `fields = extract_fields(text)`.
 3. `errors = validate(fields)`.
 4. Si `nif` e `invoice_number` existen y `repo.find_by_invoice(...)` devuelve algo,
    lanza `DuplicateDocument(existing_id)`.
@@ -92,8 +94,10 @@ Regla de dependencias: `domain` no importa nada del proyecto; `application` solo
 
 `GetDocument.execute(id) -> Document`: lanza `DocumentNotFound` si no existe.
 
-`ExportDocuments.execute(format) -> bytes`: elige el `Exporter` de un diccionario
-`{"csv": CsvExporter(), "xlsx": XlsxExporter()}` y exporta `repo.list_all()`.
+`ExportDocuments.execute(file_format) -> ExportedFile`: elige el `Exporter` de un diccionario
+`{"csv": CsvExporter(), "xlsx": XlsxExporter()}` y exporta `repo.list_all()`. Si el formato no
+está en el diccionario lanza `UnsupportedFormat` (el diccionario es la única fuente de verdad de
+los formatos). `ExportedFile` lleva `content`, `media_type` y `filename` (`facturas.<extension>`).
 
 ## API
 
@@ -110,7 +114,8 @@ para que la gestoría la revise.
 
 ## Persistencia
 
-SQLAlchemy 2 con una tabla `documents`. Los errores se guardan en una columna JSON.
+SQLAlchemy 2 con una tabla `documents`. Los errores se guardan en una columna JSON y los importes
+como texto (tipo `Money`), porque SQLite no tiene decimales exactos y así no se pierde precisión.
 `DATABASE_URL` por defecto `sqlite:///facturas.db`; cambiar a PostgreSQL es cambiar esa URL.
 Las tablas se crean con `create_all` al arrancar (sin Alembic en la v1).
 
@@ -128,6 +133,8 @@ Orden de desarrollo, cada paso con rojo → verde → refactor:
 `sqlite://`, `exporters`) → 6. API con `TestClient` y casos de uso conectados a fakes.
 
 Herramientas: `pytest`, `ruff`. Los PDFs de prueba se generan con `reportlab` (dependencia de desarrollo).
+Los tests están en una carpeta plana `tests/`, con `factories.py` (datos de prueba) y `fakes.py`
+(repositorio en memoria y lector de PDF falso) compartidos para no repetir código.
 
 ## Principios
 
@@ -142,5 +149,6 @@ Herramientas: `pytest`, `ruff`. Los PDFs de prueba se generan con `reportlab` (d
 ## Limitaciones conocidas
 
 - Se asume que el primer NIF del texto es el del proveedor.
+- Una sola tasa de IVA por factura (se usa la última línea que empieza por "IVA").
 - Las reglas de extracción están pensadas para facturas con etiquetas en español
   ("Base imponible", "IVA", "Total"); otras plantillas necesitarán nuevas reglas.
