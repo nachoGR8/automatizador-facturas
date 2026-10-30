@@ -29,10 +29,11 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
-src = ["src", "tests"]
+src = [".", "src", "tests"]
 extend-exclude = ["docs"]
 
 [tool.ruff.lint]

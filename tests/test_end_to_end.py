@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
+from benchmark.pdf_factory import make_pdf
 from factories import INVOICE_LINES
 from facturas.main import build_app
-from pdf_factory import make_pdf
 
 
 def test_upload_get_and_export_with_the_real_adapters(tmp_path, monkeypatch):

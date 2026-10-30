@@ -1,10 +1,10 @@
 import pytest
 
+from benchmark.pdf_factory import make_pdf
 from factories import INVOICE_LINES, make_fields
 from facturas.adapters.pdf_reader import PdfplumberReader
 from facturas.application.errors import UnreadableDocument
 from facturas.domain.extraction import extract_fields
-from pdf_factory import make_pdf
 
 
 def test_reads_the_text_of_a_pdf():
